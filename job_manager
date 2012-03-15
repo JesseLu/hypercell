@@ -1,0 +1,56 @@
+#!/bin/bash
+# The script that does the real work.
+
+# in_dir=in
+# work_dir=work
+# out_dir=out
+
+
+# # Check if there is a job running.
+# if test `ls work | wc -l` -ne 0
+# then
+#     echo 'Job currently running.'
+#     exit 1
+# fi
+
+# See if there is a job to run.
+if test `ls in | wc -l` -eq 0
+then
+    echo -n '.'
+    exit 0
+fi
+
+# There is a file, print out date.
+echo ''
+echo `date`
+
+# Choose oldest file. 
+filename=`ls -c in | tail -n 1`
+echo "Chose file: $filename"
+
+# Make sure it has been completely uploaded.
+while :
+do
+# Get time since the file was last touched.
+    file_last_access=`stat --format=%Y in/$filename` # Time last accessed since Epoch.
+    current_time=`date +%s` # current time since Epoch.
+    time_diff=`expr $current_time - $file_last_access`
+    if test $time_diff -lt 2 # last access must have been longer than 4 seconds ago.
+    then
+        echo "Waiting for $filename to finish transferring..."
+        sleep 2
+    else
+        break
+    fi
+done
+
+echo "Running file: $filename..."
+
+# Run the thing
+mv in/$filename work/$filename
+./hypercell.out -device=1 work/$filename work/$filename.out &> out/$filename.log 
+echo $? > out/$filename.status # Outputs 1 if there was an error.
+rm work/$filename
+mv work/$filename.out out/$filename.out
+mv source_code.debug  out/$filename.source
+echo "Done."

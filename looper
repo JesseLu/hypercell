@@ -1,0 +1,10 @@
+#!/bin/bash
+# simply keep on running job_manager
+
+start_date=`date`
+echo "Job manager started on $start_date"
+while :
+do
+    ./job_manager
+    sleep 1
+done
